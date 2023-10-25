@@ -1,6 +1,7 @@
 import java.util.HashMap;
+import java.io.*;
 
-public class PlayerCharacter {
+public class PlayerCharacter implements Serializable{
     private String charName;
     private String charClass;
     private int maxHealth;
@@ -49,4 +50,7 @@ public class PlayerCharacter {
     public int getMaxHealth(){
         return maxHealth;
     }
+
+    // serialize character object to save to file
+
 }
