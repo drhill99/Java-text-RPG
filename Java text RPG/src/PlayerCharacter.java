@@ -1,5 +1,6 @@
 import java.util.HashMap;
 import java.io.*;
+import java.util.Map;
 
 public class PlayerCharacter implements Serializable{
     private String charName;
@@ -19,6 +20,7 @@ public class PlayerCharacter implements Serializable{
     private HashMap<String, int[]> classRangedAttackBonuses = new HashMap<>();
     // character inventory maps
     private HashMap<String, String> equippedGear = new HashMap<>();
+    private HashMap<String, Integer> consumables = new HashMap<>();
 
     // equipment information maps
     private HashMap<String, Integer> armorValues = new HashMap<>();
@@ -63,6 +65,9 @@ public class PlayerCharacter implements Serializable{
         equippedGear.put("ranged", "empty");
         equippedGear.put("armor", "empty");
         equippedGear.put("offhand", "empty");
+            // consumables
+        consumables.put("arrow", 0);
+        consumables.put("health potion", 0);
             // equipment information
         armorValues.put("chain mail", 8);
         armorValues.put("leather armor", 5);
@@ -89,7 +94,7 @@ public class PlayerCharacter implements Serializable{
             nextLevelUp += 1000;
         }
     }
-    // getters
+    // attribute getters
     public void displayCharacterInfo(){
         println("Name: " + charName + " - Class: " + charClass + " - Level: " + charLevel + " - Exp: " + experience + "/" + nextLevelUp);
         println("HP: " + curHealth + "/" + maxHealth);
@@ -98,7 +103,42 @@ public class PlayerCharacter implements Serializable{
     public String getName(){
         return charName;
     }
-
+    // inventory getters
+    public void displayEquippedGear(){
+        for(Map.Entry<String, String> equipSlot : equippedGear.entrySet()){
+            println(equipSlot.getKey() + ": " + equipSlot.getValue());
+        }
+        for(Map.Entry<String, Integer> consumable : consumables.entrySet()){
+            println(consumable.getKey() + ": " + consumable.getValue());
+        }
+    }
+    // inventory setters
+    public boolean purchaseItem(String itemType, String equipSlot, String itemName, int goldCost, int count){
+        if(gold >= goldCost){
+            gold -= goldCost;
+            if(itemType.equalsIgnoreCase("consumable")){
+                addUseConsumable(true, itemName, count);
+                return true;
+            } else if(itemType.equalsIgnoreCase("equip")){
+                equipItem(itemName, equipSlot);
+                return true;
+            }
+        } return false;
+    }
+    public void addUseConsumable(boolean addUse, String itemName, int count){
+        if(addUse){
+            consumables.put(itemName, consumables.get(itemName) + 1);
+        } else {
+            if(consumables.get(itemName) > 0){
+                consumables.put(itemName, consumables.get(itemName) - 1);
+            } else {
+                println("You are out of " + itemName);
+            }
+        }
+    }
+    public void equipItem(String itemName, String itemType){
+        equippedGear.put(itemType, itemName);
+    }
     public int getGold(){
         return gold;
     }
@@ -114,6 +154,7 @@ public class PlayerCharacter implements Serializable{
         return maxHealth;
     }
 
+    // utility functions
     static void println(String input){
         System.out.println(input);
     }
