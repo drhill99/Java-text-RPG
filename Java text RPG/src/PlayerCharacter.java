@@ -1,6 +1,7 @@
 import java.util.HashMap;
 import java.io.*;
 import java.util.Map;
+import java.lang.Math;
 
 public class PlayerCharacter implements Serializable{
     private String charName;
@@ -152,6 +153,25 @@ public class PlayerCharacter implements Serializable{
 
     public int getMaxHealth(){
         return maxHealth;
+    }
+
+    // character actions
+    public double attack(String atkType){
+        String weaponSlot ="";
+        switch (atkType){
+            case("m"):
+                weaponSlot = "melee";
+            case("r"):
+                weaponSlot = "ranged";
+        }
+        if(equippedGear.get(weaponSlot).equals("empty")){
+            println("You do not have a " + weaponSlot + " weapon equipped.");
+        } else {
+            int minDmg = weaponDamage.get(equippedGear.get(weaponSlot))[0];
+            int maxDmg = weaponDamage.get(equippedGear.get(weaponSlot))[1];
+            return Math.random()*(maxDmg - minDmg +1 ) + minDmg;
+        }
+        return 0;
     }
 
     // utility functions

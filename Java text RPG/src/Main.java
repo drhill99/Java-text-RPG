@@ -16,13 +16,13 @@ public class Main {
             if(activeCharacters.isEmpty()){
                 print("No active characters, create new character or load saved character? ");
                 String createOrLoad = scanner.nextLine();
-                if(createOrLoad.equalsIgnoreCase("create")){
+                if(createOrLoad.equalsIgnoreCase("c")){
                     println("Creating new character:");
                     PlayerCharacter character = createCharacter(scanner);
                     character.displayCharacterInfo();
                     activeCharacters.add(character);
                     print("Set new character as active character?");
-                    String setAsActive = scanner.next();
+                    String setAsActive = scanner.nextLine();
                     if(setAsActive.equalsIgnoreCase("y")){
                         activeCharacter = character;
                     }
@@ -31,21 +31,24 @@ public class Main {
                     activeCharacters.add(character);
                 }
             }
-           // activeCharacter = findCharacterObject(scanner, activeCharacters);
+           // label A
             println("word inside ( ) indicates command");
-            println("   (create) new character");
-            println("   (load) character file");
-            println("   (save) character to file");
-            println("   (change) active character.");
-            println("   (display) character info");
-            println("   (shop) with active character");
-            println("   add (exp) to active character");
-            println("   show (inv)entory");
+            println("   (c)reate new character");
+            println("   (l)oad character file");
+            println("   (s)ave character to file");
+            println("   change (a)ctive character.");
+            println("   (d)isplay character info");
+            println("   sho(p) with active character");
+            println("   add e(x)perience to active character");
+            println("   show (i)nventory");
+            println("   attac(k)");
             print("     > ");
+//            scanner.nextLine();
+            userInput = scanner.nextLine().trim();
             scanner.nextLine();
-            userInput = scanner.nextLine();
 
-            if(userInput.equalsIgnoreCase("create")){
+
+            if("c".equalsIgnoreCase(userInput)){
                 println("Creating new character:");
                 PlayerCharacter character = createCharacter(scanner);
                 character.displayCharacterInfo();
@@ -55,14 +58,14 @@ public class Main {
                 if(setAsActive.equalsIgnoreCase("y")){
                     activeCharacter = character;
                 }
-            } else if(userInput.equalsIgnoreCase("display") && activeCharacter != null){
+            } else if(userInput.equalsIgnoreCase("d") && activeCharacter != null){
                 print("character to display > ");
                 //userInput = scanner.nextLine(); // character Name
                 //printCharacterInfo(activeCharacters, userInput);
                 if(activeCharacter != null){
                     activeCharacter.displayCharacterInfo();
                 }
-            } else if (userInput.equalsIgnoreCase("load")){
+            } else if (userInput.equalsIgnoreCase("l")){
                 PlayerCharacter character = loadCharacterObjectFromFile(activeCharacters, scanner);
                 if(character != null){
                     activeCharacters.add(character);
@@ -70,28 +73,36 @@ public class Main {
                 } else {
                     println("failed to load character.");
                 }
-            } else if (userInput.equalsIgnoreCase("save")){
+            } else if (userInput.equalsIgnoreCase("s")){
                 serializeCharacterObject(scanner, activeCharacter);
 
-            } else if (userInput.equalsIgnoreCase("exp")){
+            } else if (userInput.equalsIgnoreCase("x")){
                 //findCharacterObject(scanner, activeCharacters).gainExperience(500);
                 if(activeCharacter != null){
                     activeCharacter.gainExperience(500);
                 } else {
                     println("Please create or choose an active character.");
                 }
-            } else if (userInput.equalsIgnoreCase("shop")){
+            } else if (userInput.equalsIgnoreCase("p")){
 //                shop(scanner, Objects.requireNonNull(findCharacterObject(scanner, activeCharacters)));
                 if(activeCharacter != null){
                     shop(scanner, activeCharacter);
                 } else {
                     println("Please create or choose an active character.");
                 }
-            } else if (userInput.equalsIgnoreCase("change")){
+            } else if (userInput.equalsIgnoreCase("a")){
                 activeCharacter = findCharacterObject(scanner, activeCharacters);
-            } else if (userInput.equalsIgnoreCase("inv")){
+            } else if (userInput.equalsIgnoreCase("i")){
                 if(activeCharacter != null){
                     activeCharacter.displayEquippedGear();
+                } else {
+                    println("Please create or choose an active character.");
+                }
+            } else if (userInput.equalsIgnoreCase("k")){
+                if(activeCharacter != null){
+                    print("(M)elee or (R)anged?");
+                    String atkType = scanner.nextLine();
+                    println("You attack dealt " + activeCharacter.attack(atkType));
                 } else {
                     println("Please create or choose an active character.");
                 }
