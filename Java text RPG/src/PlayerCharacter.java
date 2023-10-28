@@ -1,7 +1,7 @@
 import java.util.HashMap;
 import java.io.*;
 import java.util.Map;
-import java.lang.Math;
+import java.util.Random;
 
 public class PlayerCharacter implements Serializable{
     private String charName;
@@ -26,7 +26,7 @@ public class PlayerCharacter implements Serializable{
     // equipment information maps
     private HashMap<String, Integer> armorValues = new HashMap<>();
     private HashMap<String, int[]> weaponDamage = new HashMap<>();
-
+    private HashMap<String, Integer> healthPotionValues = new HashMap<>();
     // default constructor
     public PlayerCharacter(){
     }
@@ -79,6 +79,10 @@ public class PlayerCharacter implements Serializable{
         weaponDamage.put("two handed axe", new int[]{2, 10});
         weaponDamage.put("bow", new int[]{1,6});
         weaponDamage.put("mage staff", new int[]{3,8});
+            // heatlh potion values
+        healthPotionValues.put("health potion", 5);
+        healthPotionValues.put("medium health potion", 10);
+        healthPotionValues.put("greater health potion", 15);
 
 
     }
@@ -97,13 +101,32 @@ public class PlayerCharacter implements Serializable{
     }
     // attribute getters
     public void displayCharacterInfo(){
-        println("Name: " + charName + " - Class: " + charClass + " - Level: " + charLevel + " - Exp: " + experience + "/" + nextLevelUp);
-        println("HP: " + curHealth + "/" + maxHealth);
-        println("Armor: " + armor);
+        System.out.println();
+        println("Party leader:");
+        println("   Name: " + charName + " - Class: " + charClass + " - Level: " + charLevel + " - Exp: " + experience + "/" + nextLevelUp);
+        println("   HP: " + curHealth + "/" + maxHealth + " - Gold: " + gold);
+        println("   Armor: " + armor);
+    }
+    public String getCharClass(){
+        return charClass;
+    }
+    public int getCurHealth(){
+        return curHealth;
+    }
+    public int getMaxHealth(){
+        return maxHealth;
     }
     public String getName(){
         return charName;
     }
+    public void setHealth(boolean gainLose, int amount){
+        if(gainLose){
+            curHealth += amount;
+        } else {
+            curHealth -= amount;
+        }
+    }
+
     // inventory getters
     public void displayEquippedGear(){
         for(Map.Entry<String, String> equipSlot : equippedGear.entrySet()){
@@ -113,10 +136,16 @@ public class PlayerCharacter implements Serializable{
             println(consumable.getKey() + ": " + consumable.getValue());
         }
     }
+    public int getGold(){
+        return gold;
+    }
+
+
     // inventory setters
     public boolean purchaseItem(String itemType, String equipSlot, String itemName, int goldCost, int count){
         if(gold >= goldCost){
-            gold -= goldCost;
+
+            setGold(false, goldCost);
             if(itemType.equalsIgnoreCase("consumable")){
                 addUseConsumable(true, itemName, count);
                 return true;
@@ -126,9 +155,16 @@ public class PlayerCharacter implements Serializable{
             }
         } return false;
     }
+    public void setGold(boolean addGain, int amount){
+        if(addGain){
+            gold += amount;
+        } else {
+            gold -= amount;
+        }
+    }
     public void addUseConsumable(boolean addUse, String itemName, int count){
         if(addUse){
-            consumables.put(itemName, consumables.get(itemName) + 1);
+            consumables.put(itemName, consumables.get(itemName) + count);
         } else {
             if(consumables.get(itemName) > 0){
                 consumables.put(itemName, consumables.get(itemName) - 1);
@@ -139,41 +175,55 @@ public class PlayerCharacter implements Serializable{
     }
     public void equipItem(String itemName, String itemType){
         equippedGear.put(itemType, itemName);
-    }
-    public int getGold(){
-        return gold;
-    }
-    public String getCharClass(){
-        return charClass;
-    }
-
-    public int getCurHealth(){
-        return curHealth;
-    }
-
-    public int getMaxHealth(){
-        return maxHealth;
+        if("armor".equalsIgnoreCase(itemType)){
+            armor = armor + armorValues.get(itemName);
+        }
     }
 
     // character actions
     public double attack(String atkType){
+
+        Random random = new Random();
         String weaponSlot ="";
-        switch (atkType){
-            case("m"):
-                weaponSlot = "melee";
-            case("r"):
-                weaponSlot = "ranged";
+        if("m".equalsIgnoreCase(atkType)){
+            weaponSlot = "melee";
+
+            if(equippedGear.get(weaponSlot).equals("empty")){
+                println("You do not have a " + weaponSlot + " weapon equipped.");
+            } else {
+                int minDmg = weaponDamage.get(equippedGear.get(weaponSlot))[0];
+                int maxDmg = weaponDamage.get(equippedGear.get(weaponSlot))[1];
+                return random.nextInt(maxDmg) + minDmg;
+            }
+
+        } else if("r".equalsIgnoreCase(atkType)){
+            weaponSlot = "ranged";
+            if(consumables.get("arrow") > 0){
+                if(equippedGear.get(weaponSlot).equals("empty")){
+                    println("You do not have a " + weaponSlot + " weapon equipped.");
+                } else {
+                    int minDmg = weaponDamage.get(equippedGear.get(weaponSlot))[0];
+                    int maxDmg = weaponDamage.get(equippedGear.get(weaponSlot))[1];
+                    addUseConsumable(false, "arrow", 1);
+                    return random.nextInt(maxDmg) + minDmg;
+                }
+            } else {
+                println("You are out of arrows!");
+            }
         }
-        if(equippedGear.get(weaponSlot).equals("empty")){
-            println("You do not have a " + weaponSlot + " weapon equipped.");
-        } else {
-            int minDmg = weaponDamage.get(equippedGear.get(weaponSlot))[0];
-            int maxDmg = weaponDamage.get(equippedGear.get(weaponSlot))[1];
-            return Math.random()*(maxDmg - minDmg +1 ) + minDmg;
-        }
+
         return 0;
     }
-
+    public void useHealthPotion(){
+        if(consumables.get("health potion") > 0){
+            setHealth(true, 5);
+        }
+            // set health if greater after using potion
+        if(curHealth > maxHealth){
+            curHealth = maxHealth;
+        }
+        addUseConsumable(false, "health potion", 1);
+    }
     // utility functions
     static void println(String input){
         System.out.println(input);
