@@ -14,36 +14,38 @@ public class PlayerCharacter implements Serializable{
     private int armor;
     private int gold;
 
-    // character behavior modifiers
-    private final HashMap<String, Integer> classStartingHP = new HashMap<>();
-    private final HashMap<String, Integer> classBonusHealthPerLevel = new HashMap<>();
-    private HashMap<String, int[]> classMeleeAttackBonuses = new HashMap<>();
-    private HashMap<String, int[]> classRangedAttackBonuses = new HashMap<>();
-    // character inventory maps
-    private HashMap<String, String> equippedGear = new HashMap<>();
-    private HashMap<String, Integer> consumables = new HashMap<>();
+        // character behavior modifiers
+    private final HashMap<String, Integer> classStartingHP = new HashMap<>(); // HashMap holds character starting HP by class
+    private final HashMap<String, Integer> classBonusHealthPerLevel = new HashMap<>(); // HashMap holds character bonus health per level by class
+    private HashMap<String, int[]> classMeleeAttackBonuses = new HashMap<>(); // HashMap holds character melee attack bonuses, presently not implemented
+    private final HashMap<String, int[]> classRangedAttackBonuses = new HashMap<>(); // HashMap holds character ranged attack bonuses, presently not implemented
 
-    // equipment information maps
-    private HashMap<String, Integer> armorValues = new HashMap<>();
-    private HashMap<String, int[]> weaponDamage = new HashMap<>();
-    private HashMap<String, Integer> healthPotionValues = new HashMap<>();
-    // default constructor
+
+        // character inventory maps
+    private final HashMap<String, String> equippedGear = new HashMap<>(); // HashMap holds character equipped items by slot
+    private final HashMap<String, Integer> consumables = new HashMap<>(); // HashMap holds characters consumables by type and count
+
+        // equipment information maps
+    private final HashMap<String, Integer> armorValues = new HashMap<>(); // HashMap holds armor values by type and value
+    private final HashMap<String, int[]> weaponDamage = new HashMap<>(); // HashMap holds weapon damage range by name and min/max int
+
+        // default constructor
     public PlayerCharacter(){
     }
-    // parametrized constructor
+        // parametrized constructor
     public PlayerCharacter(String name, String charClass){
         this.charName = name;
         this.charClass = charClass;
         armor = 8; // base armor
-        charLevel = 1;
-        experience = 0;
-        gold = 175;
-        nextLevelUp = experience + 1000;
-        initCharacterBehaviorMaps();
-        initCharacterInfo();
+        charLevel = 1; // starting level
+        experience = 0; // starting experience
+        gold = 175; // starting gold
+        nextLevelUp = experience + 1000; // starting experience to gain for new level
+        initCharacterBehaviorMaps(); // initialize HashMaps
+        initCharacterInfo(); // initialize character staring Hp
 
     }
-    // setters
+        // setters
     public void initCharacterBehaviorMaps(){
             // starting health map
         classStartingHP.put("warrior", 20);
@@ -80,33 +82,47 @@ public class PlayerCharacter implements Serializable{
         weaponDamage.put("bow", new int[]{1,6});
         weaponDamage.put("mage staff", new int[]{3,8});
             // heatlh potion values
-        healthPotionValues.put("health potion", 5);
-        healthPotionValues.put("medium health potion", 10);
-        healthPotionValues.put("greater health potion", 15);
+//        healthPotionValues.put("health potion", 5);
+//        healthPotionValues.put("medium health potion", 10);
+//        healthPotionValues.put("greater health potion", 15);
 
 
     }
     public void initCharacterInfo(){
-        maxHealth = classStartingHP.get(charClass);
-        curHealth = maxHealth;
+        maxHealth = classStartingHP.get(charClass); // retrieve value from HashMap
+        curHealth = maxHealth; // set current health to max health
     }
-    public void gainExperience(int exp){
-        experience += exp;
-        int expOvershoot = experience - nextLevelUp;
-        if(experience > nextLevelUp){
-            charLevel += 1;
-            maxHealth += classBonusHealthPerLevel.get(charClass);
-            nextLevelUp += 1000;
+    public void setHealth(boolean gainLose, int amount){
+        if(gainLose){
+            curHealth += amount;
+        } else {
+            curHealth -= amount;
         }
     }
-    // attribute getters
+
+        // add experience to character
+    public void gainExperience(int exp){
+        experience += exp; // add experience
+        if(experience > nextLevelUp){ // if new experience value is enough to gain a level
+            charLevel += 1; // increment level
+            maxHealth += classBonusHealthPerLevel.get(charClass); // adjust maxHealth based on HashMap value
+            curHealth = maxHealth; // set current health to max health
+            nextLevelUp += 1000 + (250 * charLevel); // adjust amount to gain a level
+        }
+    }
+
+
+
+        // display character attributes
     public void displayCharacterInfo(){
         System.out.println();
-        println("Party leader:");
+        println("\nParty leader:");
         println("   Name: " + charName + " - Class: " + charClass + " - Level: " + charLevel + " - Exp: " + experience + "/" + nextLevelUp);
         println("   HP: " + curHealth + "/" + maxHealth + " - Gold: " + gold);
         println("   Armor: " + armor);
     }
+
+        // attribute getters, simply return class attributes
     public String getCharClass(){
         return charClass;
     }
@@ -119,13 +135,9 @@ public class PlayerCharacter implements Serializable{
     public String getName(){
         return charName;
     }
-    public void setHealth(boolean gainLose, int amount){
-        if(gainLose){
-            curHealth += amount;
-        } else {
-            curHealth -= amount;
-        }
-    }
+
+
+
 
     // inventory getters
     public void displayEquippedGear(){
@@ -141,20 +153,24 @@ public class PlayerCharacter implements Serializable{
     }
 
 
+
+
+
     // inventory setters
     public boolean purchaseItem(String itemType, String equipSlot, String itemName, int goldCost, int count){
-        if(gold >= goldCost){
-
-            setGold(false, goldCost);
+        if(gold >= goldCost){ // check that character object has enough gold to complete transaction
+            setGold(false, goldCost); // remove specified amount of gold
+                // transaction based on consumable versus equip item type
             if(itemType.equalsIgnoreCase("consumable")){
-                addUseConsumable(true, itemName, count);
-                return true;
+                addUseConsumable(true, itemName, count); // adjust consumable counts
+                return true; // return true that the transaction was successful
             } else if(itemType.equalsIgnoreCase("equip")){
-                equipItem(itemName, equipSlot);
-                return true;
+                equipItem(itemName, equipSlot); // equip the new item
+                return true; // return true that the transaction was successful
             }
-        } return false;
+        } return false; // return false that the transaction failed due to lack of gold
     }
+        // adjust gold attribute, true for add, false for remove
     public void setGold(boolean addGain, int amount){
         if(addGain){
             gold += amount;
@@ -162,49 +178,54 @@ public class PlayerCharacter implements Serializable{
             gold -= amount;
         }
     }
+        // adjust consumable count, true for add, false for use
     public void addUseConsumable(boolean addUse, String itemName, int count){
         if(addUse){
-            consumables.put(itemName, consumables.get(itemName) + count);
-        } else {
-            if(consumables.get(itemName) > 0){
-                consumables.put(itemName, consumables.get(itemName) - 1);
-            } else {
-                println("You are out of " + itemName);
-            }
+            consumables.put(itemName, consumables.get(itemName) + count); // increase the count of the consumable
+//             else {
+//                println("You are out of " + itemName); // informs user that they are out of the specified consumable
+//            }
+        } else if(consumables.get(itemName) > 0){ // check that the consumable count is greater than 0 before using.
+            consumables.put(itemName, consumables.get(itemName) - 1);
+        }
+        if(consumables.get(itemName) == 0){
+            println("You have run out of " + itemName + "s!");
         }
     }
     public void equipItem(String itemName, String itemType){
-        equippedGear.put(itemType, itemName);
-        if("armor".equalsIgnoreCase(itemType)){
+        equippedGear.put(itemType, itemName); // add new value to the equipped gear map for the itemType key
+        if("armor".equalsIgnoreCase(itemType)){ // if the itemType is armor, adjust armor attribute
             armor = armor + armorValues.get(itemName);
         }
     }
 
+
+
+
     // character actions
+        // attack with specified weapon type
     public double attack(String atkType){
-
-        Random random = new Random();
-        String weaponSlot ="";
-        if("m".equalsIgnoreCase(atkType)){
+        Random random = new Random(); // create random object
+        String weaponSlot; // declare weaponSlot string
+        if("m".equalsIgnoreCase(atkType)){ // if itemType parameter is 'm'
             weaponSlot = "melee";
-
-            if(equippedGear.get(weaponSlot).equals("empty")){
+            if(equippedGear.get(weaponSlot).equals("empty")){ // check that a weapon is equipped for the atkType
                 println("You do not have a " + weaponSlot + " weapon equipped.");
             } else {
-                int minDmg = weaponDamage.get(equippedGear.get(weaponSlot))[0];
-                int maxDmg = weaponDamage.get(equippedGear.get(weaponSlot))[1];
-                return random.nextInt(maxDmg) + minDmg;
+                int minDmg = weaponDamage.get(equippedGear.get(weaponSlot))[0]; // grab damage range minimum
+                int maxDmg = weaponDamage.get(equippedGear.get(weaponSlot))[1]; // grab damage range maximum
+                return random.nextInt(maxDmg) + minDmg; // return damage value double
             }
 
-        } else if("r".equalsIgnoreCase(atkType)){
+        } else if("r".equalsIgnoreCase(atkType)){ // execute same as above but for ranged slot
             weaponSlot = "ranged";
-            if(consumables.get("arrow") > 0){
+            if(consumables.get("arrow") > 0){ // check that sufficient number of arrows exist
                 if(equippedGear.get(weaponSlot).equals("empty")){
                     println("You do not have a " + weaponSlot + " weapon equipped.");
                 } else {
                     int minDmg = weaponDamage.get(equippedGear.get(weaponSlot))[0];
                     int maxDmg = weaponDamage.get(equippedGear.get(weaponSlot))[1];
-                    addUseConsumable(false, "arrow", 1);
+                    addUseConsumable(false, "arrow", 1); // remove 1 arrow
                     return random.nextInt(maxDmg) + minDmg;
                 }
             } else {
@@ -215,22 +236,22 @@ public class PlayerCharacter implements Serializable{
         return 0;
     }
     public void useHealthPotion(){
-        if(consumables.get("health potion") > 0){
-            setHealth(true, 5);
+        if(consumables.get("health potion") > 0){ // check that at least 1 health potion is held
+            setHealth(true, 5); // increase current health by 5.
+        } else {
+            println("You dont have any health potions!");
         }
             // set health if greater after using potion
         if(curHealth > maxHealth){
             curHealth = maxHealth;
         }
+            // adjust health potion count
         addUseConsumable(false, "health potion", 1);
     }
     // utility functions
+        // custom println function cuz System.out.println everytime..... limited to taking string input
     static void println(String input){
         System.out.println(input);
-    }
-    // print without new line so I dont have to type System.out.print everytime
-    static void print(String input){
-        System.out.print(input);
     }
 
 }
