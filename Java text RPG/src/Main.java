@@ -1,6 +1,8 @@
 import java.io.*;
 import java.util.*;
 import java.net.Socket;
+import java.lang.Math;
+
 
 public class Main {
     public static void main(String[] args) {
@@ -56,15 +58,41 @@ public class Main {
                 // retrieve game data object from server
             System.out.println("Waiting for opponent...");
             gameData gameDataObject;
+            // update the gameDataObject with this character's health
             while(true){
                 gameDataObject = recvFromServer(inputStream);
+
                 if(gameDataObject != null){
-                    System.out.println(gameDataObject.playerOneHealth);
+//                    println("1");
+                    if(gameDataObject.health == 0){
+//                        println("2");
+                        println("You won!");
+                    } else {
+                        boolean gameOver;
+                        if(gameDataObject != null && activeCharacter != null){
+//                            println("3");
+                            gameOver = combatTakeDamage(gameDataObject, activeCharacter);
+                            // game over boolean is returned as false if you're still alive, true if dead, breaks do while loop.
+                            if(gameOver){
+                                gameDataObject.atkRoll = 0;
+                                gameDataObject.damage = 0;
+                                transmitToServer(outputStream, gameDataObject);
+                                break;
+                            }
+                        }
+                    }
                     break;
-                } else {
-//                    System.out.println("game data object is null");
                 }
             }
+//            while(true){
+//                gameDataObject = recvFromServer(inputStream);
+//                if(gameDataObject != null){
+//                    System.out.println(gameDataObject.playerOneHealth);
+//                    break;
+//                } else {
+////                    System.out.println("game data object is null");
+//                }
+//            }
 //            gameData gameDataObject;
 //            System.out.println("Waiting for opponent...");
 //            while(true){
@@ -100,7 +128,7 @@ public class Main {
             println("   take (dam)age");
 
             userInput = scanner.nextLine();
-            activeCharacter = executeUserInput(userInput, activeCharacter, activeCharacters, scanner);
+            activeCharacter = executeUserInput(gameDataObject, userInput, activeCharacter, activeCharacters, scanner);
 //            println("End of menu loop, active character is: " + activeCharacter.getName());
                 // send game data object back to server to send to other client
             transmitToServer(outputStream, gameDataObject);
@@ -119,16 +147,18 @@ public class Main {
     }
 
     static gameData recvFromServer(ObjectInputStream inputStream){
-        try{
-            return (gameData) inputStream.readObject();
-        } catch (IOException | ClassNotFoundException e){
-            e.printStackTrace();
-            return null;
+        while(true){
+            try{
+                return (gameData) inputStream.readObject();
+            } catch (IOException | ClassNotFoundException e){
+                e.printStackTrace();
+                return null;
+            }
         }
     }
 
     // FUNCTION DEFINITIONS *************************************************************
-    static PlayerCharacter executeUserInput(String userInput, PlayerCharacter activeCharacter, List<PlayerCharacter> activeCharacters, Scanner scanner){
+    static PlayerCharacter executeUserInput(gameData gameDataObject, String userInput, PlayerCharacter activeCharacter, List<PlayerCharacter> activeCharacters, Scanner scanner){
             // create new character
         if("c".equalsIgnoreCase(userInput)){
             println("Creating new character:");
@@ -251,13 +281,20 @@ public class Main {
         }
             // user characters attack function
         else if (userInput.equalsIgnoreCase("k")){
+            double damage = 0;
+            int atkRoll = 0;
             if(activeCharacter != null){ // check that character object is not null
                 print("(M)elee or (R)anged?");
                 String atkType = scanner.nextLine();
-                println("You attack dealt " + activeCharacter.attack(atkType));
+                damage = activeCharacter.attack(atkType);
+                atkRoll = activeCharacter.attackRoll();
+                println("Damage: " + damage);
+                println("To hit: " + atkRoll);
             } else {
                 println("Please create or choose an active character."); // prompt user to create new character or update active
             }
+            gameDataObject.damage = damage;
+            gameDataObject.atkRoll = atkRoll;
         }
             // use health potion
         else if(userInput.equalsIgnoreCase("pot")){
@@ -279,6 +316,24 @@ public class Main {
         }
             // the active character may be changed in the above if else if statements, so return active character back to menu loop
         return activeCharacter;
+    }
+    static boolean combatTakeDamage(gameData gameDataObject, PlayerCharacter activeCharacter){
+            // check opponents atk roll against active characters armor, and take damage accordingly
+        println("Opponents attack roll: " + gameDataObject.atkRoll);
+
+        if(gameDataObject.atkRoll > activeCharacter.getArmor()){
+            println("You take " + gameDataObject.damage + " damage");
+            activeCharacter.setHealth(false, (int)(gameDataObject.damage));
+            if(activeCharacter.getCurHealth() <= 0){
+                activeCharacter.setHealth(true, Math.abs(activeCharacter.getCurHealth()));
+                println("You Lost!");
+                return true;
+            }
+        } else {
+            println("Your opponent missed!");
+        }
+        gameDataObject.health = activeCharacter.getCurHealth();
+        return false;
     }
         // print names of active character objects
     static void printCharactersInParty(List<PlayerCharacter> activeCharacters){
@@ -490,10 +545,10 @@ public class Main {
     }
 
     static class gameData implements Serializable {
-        public int playerOneHealth = 0;
-        public int playerTwoHealth = 0;
-        public int playerOneOutgoingDamage = 0;
-        public int playerTwoOutgoingDamage = 0;
+        public int health;
+        public double damage;
+        public int atkRoll;
+
         public gameData(){
         }
     }

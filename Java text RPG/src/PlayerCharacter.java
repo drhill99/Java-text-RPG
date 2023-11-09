@@ -121,7 +121,9 @@ public class PlayerCharacter implements Serializable{
         println("   HP: " + curHealth + "/" + maxHealth + " - Gold: " + gold);
         println("   Armor: " + armor);
     }
-
+    public int getArmor(){
+        return armor;
+    }
         // attribute getters, simply return class attributes
     public String getCharClass(){
         return charClass;
@@ -234,6 +236,10 @@ public class PlayerCharacter implements Serializable{
         }
 
         return 0;
+    }
+    public int attackRoll(){
+        Random random = new Random();
+        return random.nextInt(20) + 1;
     }
     public void useHealthPotion(){
         if(consumables.get("health potion") > 0){ // check that at least 1 health potion is held
