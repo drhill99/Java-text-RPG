@@ -1,8 +1,17 @@
 import java.io.*;
 import java.util.*;
+import java.net.Socket;
 
 public class Main {
     public static void main(String[] args) {
+            // setup network connection to the host server
+        String server_addr = "localhost";
+        int server_port = 20000;
+
+        try(Socket socket = new Socket(server_addr, server_port)){
+            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+            ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+
             // check for character file directory, create if does not exist
         createCharacterFileDirectory();
             // empty list of PlayerCharacter objects
@@ -27,6 +36,7 @@ public class Main {
 //                    println("Set new character as active character?");
 //                    String setAsActive = scanner.nextLine().trim();
                     activeCharacters.add(character);
+                    activeCharacter = character;
 //                    if(setAsActive.equalsIgnoreCase("y")){
 //                        activeCharacter = character;
 //                    }
@@ -43,6 +53,30 @@ public class Main {
                     }
                 }
             }
+                // retrieve game data object from server
+            System.out.println("Waiting for opponent...");
+            gameData gameDataObject;
+            while(true){
+                gameDataObject = recvFromServer(inputStream);
+                if(gameDataObject != null){
+                    System.out.println(gameDataObject.playerOneHealth);
+                    break;
+                } else {
+//                    System.out.println("game data object is null");
+                }
+            }
+//            gameData gameDataObject;
+//            System.out.println("Waiting for opponent...");
+//            while(true){
+//                gameDataObject = recvFromServer(inputStream);
+//                if(gameDataObject != null){
+//                    System.out.println(gameDataObject.playerOneHealth);
+//                    break;
+//                } else {
+////                    System.out.println("game data object is null");
+//                }
+//            }
+
            // label A
             if(activeCharacter != null){
                 activeCharacter.displayCharacterInfo();
@@ -68,7 +102,29 @@ public class Main {
             userInput = scanner.nextLine();
             activeCharacter = executeUserInput(userInput, activeCharacter, activeCharacters, scanner);
 //            println("End of menu loop, active character is: " + activeCharacter.getName());
+                // send game data object back to server to send to other client
+            transmitToServer(outputStream, gameDataObject);
         } while(!userInput.equalsIgnoreCase("quit"));
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    static void transmitToServer(ObjectOutputStream outputStream, gameData gameDataObject){
+        try{
+            outputStream.writeObject(gameDataObject);
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    static gameData recvFromServer(ObjectInputStream inputStream){
+        try{
+            return (gameData) inputStream.readObject();
+        } catch (IOException | ClassNotFoundException e){
+            e.printStackTrace();
+            return null;
+        }
     }
 
     // FUNCTION DEFINITIONS *************************************************************
@@ -430,6 +486,15 @@ public class Main {
             }
         } else {
             println("Character file directory already exists");
+        }
+    }
+
+    static class gameData implements Serializable {
+        public int playerOneHealth = 0;
+        public int playerTwoHealth = 0;
+        public int playerOneOutgoingDamage = 0;
+        public int playerTwoOutgoingDamage = 0;
+        public gameData(){
         }
     }
 }
