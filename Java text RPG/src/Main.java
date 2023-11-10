@@ -57,66 +57,46 @@ public class Main {
             }
                 // retrieve game data object from server
             System.out.println("Waiting for opponent...");
-            gameData gameDataObject;
-            boolean gameOver = false;
-            // update the gameDataObject with this character's health
+            gameData gameDataObject; // create unitialized gameData object
+            boolean gameOver = false; // set gameOver boolean to false
+                // client polls for gameDataObject
             while(true){
+                    // try to receive the gameData object from the server
                 gameDataObject = recvFromServer(inputStream);
-                println("opponent health: " + gameDataObject.health);
+                    // if the gameDataObject returns as not null:
                 if(gameDataObject != null){
-                    println("1");
+                        // first check that the gameObject does not return from the other user as true
                     if(gameDataObject.isGameOver){
-                        println("2");
+                            // print to the user that they have one
                         println("You won!");
+                            // double down on making sure the gameOver boolean is set to true before passing back to
+                            // server
                         gameOver = true;
                     } else {
-//                        boolean gameOver;
+                            // if the isGameOver attribute is not received as being true, then take damage based on
+                            // the opponents attack and damage rolls
                         if(gameDataObject != null && activeCharacter != null){
-                            println("3");
+                                // function returns true if this round of combat kills the user, and false if not
                             gameOver = combatTakeDamage(gameDataObject, activeCharacter);
-                            // game over boolean is returned as false if you're still alive, true if dead, breaks do while loop.
-//                            if(gameOver){
-//                                gameDataObject.atkRoll = 0;
-//                                gameDataObject.damage = 0;
-//                                transmitToServer(outputStream, gameDataObject);
-//                                break;
-//                            }
+
                         }
                     }
-                    break;
+                    break; // break from polling loop
                 }
             }
+                // if the round of combat kills the user:
             if(gameOver){
-                println("game is over");
+                println("game is over"); // print to user that the game is over
+                    // zero out combat attributes of gameDataObject
                 gameDataObject.atkRoll = 0;
                 gameDataObject.damage = 0;
-//                gameDataObject.health = activeCharacter.getCurHealth();
+                    // set isGameOver status to true
                 gameDataObject.isGameOver = true;
+                    // pass gameDataObject back to server
                 transmitToServer(outputStream, gameDataObject);
-                break;
+                break; // break from main function do while ending the problem on the user side
             }
-//            while(true){
-//                gameDataObject = recvFromServer(inputStream);
-//                if(gameDataObject != null){
-//                    System.out.println(gameDataObject.playerOneHealth);
-//                    break;
-//                } else {
-////                    System.out.println("game data object is null");
-//                }
-//            }
-//            gameData gameDataObject;
-//            System.out.println("Waiting for opponent...");
-//            while(true){
-//                gameDataObject = recvFromServer(inputStream);
-//                if(gameDataObject != null){
-//                    System.out.println(gameDataObject.playerOneHealth);
-//                    break;
-//                } else {
-////                    System.out.println("game data object is null");
-//                }
-//            }
 
-           // label A
             if(activeCharacter != null){
                 activeCharacter.displayCharacterInfo();
                 activeCharacter.displayEquippedGear();
@@ -140,7 +120,7 @@ public class Main {
 
             userInput = scanner.nextLine();
             activeCharacter = executeUserInput(gameDataObject, userInput, activeCharacter, activeCharacters, scanner);
-//            println("End of menu loop, active character is: " + activeCharacter.getName());
+
                 // send game data object back to server to send to other client
             transmitToServer(outputStream, gameDataObject);
         } while(!userInput.equalsIgnoreCase("quit"));
@@ -332,18 +312,21 @@ public class Main {
             // check opponents atk roll against active characters armor, and take damage accordingly
         println("Opponents attack roll: " + gameDataObject.atkRoll);
 
-        if(gameDataObject.atkRoll > activeCharacter.getArmor()){
+        if(gameDataObject.atkRoll >= activeCharacter.getArmor()){
             println("You take " + gameDataObject.damage + " damage");
+                // update users current health
             activeCharacter.setHealth(false, (int)(gameDataObject.damage));
+                // if users current health drops equal to or below 0
             if(activeCharacter.getCurHealth() <= 0){
                 activeCharacter.setHealth(true, Math.abs(activeCharacter.getCurHealth()));
-                println("You Lost!");
-                return true;
+                println("You Lost!"); // print to user that they lost
+                return true; // return true that the user has lost the game
             }
         } else {
+                // print to user that the opponent missed
             println("Your opponent missed!");
         }
-//        gameDataObject.health = activeCharacter.getCurHealth();
+            // return false indicating that the game is not yet over
         return false;
     }
         // print names of active character objects
