@@ -58,31 +58,42 @@ public class Main {
                 // retrieve game data object from server
             System.out.println("Waiting for opponent...");
             gameData gameDataObject;
+            boolean gameOver = false;
             // update the gameDataObject with this character's health
             while(true){
                 gameDataObject = recvFromServer(inputStream);
-
+                println("opponent health: " + gameDataObject.health);
                 if(gameDataObject != null){
-//                    println("1");
-                    if(gameDataObject.health == 0){
-//                        println("2");
+                    println("1");
+                    if(gameDataObject.isGameOver){
+                        println("2");
                         println("You won!");
+                        gameOver = true;
                     } else {
-                        boolean gameOver;
+//                        boolean gameOver;
                         if(gameDataObject != null && activeCharacter != null){
-//                            println("3");
+                            println("3");
                             gameOver = combatTakeDamage(gameDataObject, activeCharacter);
                             // game over boolean is returned as false if you're still alive, true if dead, breaks do while loop.
-                            if(gameOver){
-                                gameDataObject.atkRoll = 0;
-                                gameDataObject.damage = 0;
-                                transmitToServer(outputStream, gameDataObject);
-                                break;
-                            }
+//                            if(gameOver){
+//                                gameDataObject.atkRoll = 0;
+//                                gameDataObject.damage = 0;
+//                                transmitToServer(outputStream, gameDataObject);
+//                                break;
+//                            }
                         }
                     }
                     break;
                 }
+            }
+            if(gameOver){
+                println("game is over");
+                gameDataObject.atkRoll = 0;
+                gameDataObject.damage = 0;
+//                gameDataObject.health = activeCharacter.getCurHealth();
+                gameDataObject.isGameOver = true;
+                transmitToServer(outputStream, gameDataObject);
+                break;
             }
 //            while(true){
 //                gameDataObject = recvFromServer(inputStream);
@@ -332,7 +343,7 @@ public class Main {
         } else {
             println("Your opponent missed!");
         }
-        gameDataObject.health = activeCharacter.getCurHealth();
+//        gameDataObject.health = activeCharacter.getCurHealth();
         return false;
     }
         // print names of active character objects
@@ -548,7 +559,7 @@ public class Main {
         public int health;
         public double damage;
         public int atkRoll;
-
+        public boolean isGameOver;
         public gameData(){
         }
     }
